@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>ZX-Code · 全能 AI 编程 Agent · 桌宠陪伴 · 九宫格工作台</title>
+  <meta name="description" content="ZX-Code 是一款运行于 Windows 的桌面端 AI 编程 Agent。一键登录免费使用 DeepSeek / GLM / Kimi / 通义 / MiniMax 等国产大模型，免 API Key。内置 3D 桌宠、九宫格工作台、长期记忆、技能进化引擎、定时 Agent、用户画像。" />
+  <meta name="theme-color" content="#0A0A0F" />
+  <meta property="og:title" content="ZX-Code · 全能 AI 编程 Agent" />
+  <meta property="og:description" content="免 Key 国产大模型 + 3D 桌宠 + 九宫格工作台 + 长期记忆 + 技能进化 + 定时 Agent" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- ============== LOADER ============== -->
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader-inner">
+      <img class="loader-mark" src="favicon.png" alt="" aria-hidden="true" />
+      <div class="loader-text">
+        <span>Z</span><span>X</span><span>-</span><span>C</span><span>o</span><span>d</span><span>e</span>
+      </div>
+      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ============== CURSOR ============== -->
+  <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+  <!-- ============== SCROLL PROGRESS ============== -->
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+  <!-- ============== NOISE / GRAIN OVERLAY ============== -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ============== NAV ============== -->
+  <header class="nav" id="nav">
+    <a href="#top" class="nav-brand" data-cursor="hover">
+      <img class="nav-mark" src="favicon.png" alt="" aria-hidden="true" />
+      <span>ZX-Code</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#features" data-cursor="hover">特性</a>
+      <a href="#workflow" data-cursor="hover">流程</a>
+      <a href="#compare" data-cursor="hover">对比</a>
+      <a href="#developer" data-cursor="hover">开发者</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-ghost btn-sm" href="https://github.com/zouyuxuan122/ZX-code" target="_blank" rel="noopener" data-cursor="hover">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2 0-.4-.5-1.6.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.3v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
+        GitHub
+      </a>
+      <a class="btn btn-primary btn-sm" href="https://github.com/zouyuxuan122/ZX-code/releases/latest" target="_blank" rel="noopener" data-cursor="hover">
+        下载
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l7 7 7-7M12 19V3"/></svg>
+      </a>
+    </div>
+    <button class="nav-burger" id="navBurger" aria-label="菜单">
+      <span></span><span></span>
+    </button>
+  </header>
+
+  <!-- ============== MOBILE MENU ============== -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#features">特性</a>
+    <a href="#workflow">流程</a>
+    <a href="#compare">对比</a>
+    <a href="#developer">开发者</a>
+    <a href="https://github.com/zouyuxuan122/ZX-code" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/zouyuxuan122/ZX-code/releases/latest" target="_blank" rel="noopener">下载安装包</a>
+  </div>
+
+  <main id="top">
+
+    <!-- ============== HERO ============== -->
+    <section class="hero">
+      <div class="hero-bg" aria-hidden="true">
+        <div class="hero-grid"></div>
+        <div class="hero-glow hero-glow-1"></div>
+        <div class="hero-glow hero-glow-2"></div>
+        <div class="hero-glow hero-glow-3"></div>
+        <div class="hero-particles" id="heroParticles"></div>
+      </div>
+
+      <div class="hero-content">
+        <div class="hero-pill reveal-up" data-reveal>
+          <span class="hero-pill-dot"></span>
+          <span>v0.4.0 · GPL-3.0 · Windows x64</span>
+        </div>
+
+        <h1 class="hero-title">
+          <span class="line mask-line"><span class="mask-text">ZX-Code</span></span>
+          <span class="line mask-line"><span class="mask-text accent">让 AI 真正动手写代码</span></span>
+        </h1>
+
+        <p class="hero-tagline reveal-up" data-reveal>
+          全能 AI 编程 Agent · 3D 桌宠陪伴 · 九宫格工作台<br/>
+          一键登录 DeepSeek / GLM / Kimi / 通义 / MiniMax 等 9 家国产大模型，<em>免 API Key</em>。
+        </p>
+
+        <div class="hero-cta reveal-up" data-reveal>
+          <a class="btn btn-primary btn-lg magnetic" href="https://github.com/zouyuxuan122/ZX-code/releases/latest" target="_blank" rel="noopener" data-cursor="hover">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l7 7 7-7M12 19V3"/></svg>
+            下载安装包
+          </a>
+          <a class="btn btn-ghost btn-lg magnetic" href="https://github.com/zouyuxuan122/ZX-code" target="_blank" rel="noopener" data-cursor="hover">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2 0-.4-.5-1.6.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.3v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
+            查看源码
+          </a>
+        </div>
+
+        <div class="hero-meta reveal-up" data-reveal>
+          <div class="hero-meta-item"><span class="num" data-count="23">0</span><span class="lbl">内置工具</span></div>
+          <div class="hero-meta-divider"></div>
+          <div class="hero-meta-item"><span class="num" data-count="9">0</span><span class="lbl">免 Key 模型</span></div>
+          <div class="hero-meta-divider"></div>
+          <div class="hero-meta-item"><span class="num" data-count="673">0</span><span class="lbl">测试用例</span></div>
+        </div>
+      </div>
+
+      <div class="hero-scroll" aria-hidden="true">
+        <span>SCROLL</span>
+        <div class="hero-scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- ============== MARQUEE ============== -->
+    <section class="marquee" aria-hidden="true">
+      <div class="marquee-track" id="marqueeTrack">
+        <div class="marquee-group">
+          <span>DeepSeek</span><span class="dot">·</span>
+          <span>GLM 智谱</span><span class="dot">·</span>
+          <span>Kimi</span><span class="dot">·</span>
+          <span>通义千问</span><span class="dot">·</span>
+          <span>MiniMax</span><span class="dot">·</span>
+          <span>MiMo 小米</span><span class="dot">·</span>
+          <span>Perplexity</span><span class="dot">·</span>
+          <span>Qwen-AI</span><span class="dot">·</span>
+          <span>ZAI</span><span class="dot">·</span>
+          <span>OpenAI</span><span class="dot">·</span>
+          <span>Anthropic</span><span class="dot">·</span>
+          <span>Gemini</span><span class="dot">·</span>
+          <span>Ollama</span><span class="dot">·</span>
+        </div>
+        <div class="marquee-group" aria-hidden="true">
+          <span>DeepSeek</span><span class="dot">·</span>
+          <span>GLM 智谱</span><span class="dot">·</span>
+          <span>Kimi</span><span class="dot">·</span>
+          <span>通义千问</span><span class="dot">·</span>
+          <span>MiniMax</span><span class="dot">·</span>
+          <span>MiMo 小米</span><span class="dot">·</span>
+          <span>Perplexity</span><span class="dot">·</span>
+          <span>Qwen-AI</span><span class="dot">·</span>
+          <span>ZAI</span><span class="dot">·</span>
+          <span>OpenAI</span><span class="dot">·</span>
+          <span>Anthropic</span><span class="dot">·</span>
+          <span>Gemini</span><span class="dot">·</span>
+          <span>Ollama</span><span class="dot">·</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== FEATURES (BENTO) ============== -->
+    <section class="section features" id="features">
+      <div class="section-head">
+        <div class="section-label reveal-up" data-reveal>01 / CORE</div>
+        <h2 class="section-title">
+          <span class="line mask-line"><span class="mask-text">不止是聊天框。</span></span>
+          <span class="line mask-line"><span class="mask-text">是会动手的 AI 编程伙伴。</span></span>
+        </h2>
+        <p class="section-desc reveal-up" data-reveal>
+          读写文件、执行命令、搜索代码、联网查资料、派发子任务——再加上 3D 桌宠的陪伴。
+          ZX-Code 把"动嘴的 AI"变成"动手的 AI"。
+        </p>
+      </div>
+
+      <div class="bento">
+        <!-- LARGE: 免Key国产大模型 -->
+        <article class="bento-card bento-lg tilt" data-tilt>
+          <div class="bento-bg">
+            <div class="orb orb-violet"></div>
+            <div class="orb orb-cyan"></div>
+          </div>
+          <div class="bento-content">
+            <div class="bento-tag">免 API Key</div>
+            <h3 class="bento-title">9 家国产大模型<br/>一键 OAuth 登录直接用</h3>
+            <p class="bento-desc">
+              DeepSeek · GLM · Kimi · 通义 · MiniMax · MiMo · Perplexity · Qwen-AI · ZAI。
+              内置 OpenAI 兼容代理引擎，账号负载均衡，国内网络直接可用，免翻墙、免订阅、免 API Key。
+            </p>
+            <div class="bento-chips">
+              <span>OAuth 登录</span><span>账号轮转</span><span>负载均衡</span><span>免翻墙</span>
+            </div>
+          </div>
+          <div class="bento-grid-mini" aria-hidden="true">
+            <div class="mini-cell">DS</div><div class="mini-cell">GLM</div>
+            <div class="mini-cell">Kimi</div><div class="mini-cell">Qwen</div>
+            <div class="mini-cell">MM</div><div class="mini-cell">MiMo</div>
+          </div>
+        </article>
+
+        <!-- 3D 桌宠 -->
+        <article class="bento-card tilt" data-tilt>
+          <div class="bento-bg"><div class="orb orb-amber"></div></div>
+          <div class="bento-content">
+            <div class="bento-tag">桌宠陪伴</div>
+            <h3 class="bento-title">3D 桌宠 & AI 伴侣</h3>
+            <p class="bento-desc">Live2D / VRM / SVG 三种模型格式，6 种情绪状态、AI 驱动表演，让编程不再孤独。</p>
+            <div class="pet-emoji" aria-hidden="true">
+              <span class="pet-eye"></span><span class="pet-eye"></span>
+              <span class="pet-mouth"></span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 九宫格 -->
+        <article class="bento-card tilt" data-tilt>
+          <div class="bento-bg"><div class="orb orb-violet"></div></div>
+          <div class="bento-content">
+            <div class="bento-tag">工作台</div>
+            <h3 class="bento-title">九宫格自由布局</h3>
+            <p class="bento-desc">聊天、桌宠、终端、AI 实时视图、看板等 9 格拖拽组合，5 种预设。</p>
+            <div class="nine-grid" aria-hidden="true">
+              <span></span><span></span><span></span>
+              <span></span><span class="hl"></span><span></span>
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 长期记忆 -->
+        <article class="bento-card bento-md tilt" data-tilt>
+          <div class="bento-bg"><div class="orb orb-cyan"></div></div>
+          <div class="bento-content">
+            <div class="bento-tag">记忆系统</div>
+            <h3 class="bento-title">记忆树 + SuperContext</h3>
+            <p class="bento-desc">六分区 SQLite 持久化，自动抽取与召回，Obsidian 一键导出。跨会话记忆，越用越懂你。</p>
+            <div class="mem-tree" aria-hidden="true">
+              <div class="mem-node root">memory</div>
+              <div class="mem-children">
+                <div class="mem-node">project</div>
+                <div class="mem-node">decision</div>
+                <div class="mem-node">error</div>
+                <div class="mem-node">preference</div>
+                <div class="mem-node">subconscious</div>
+                <div class="mem-node">general</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 技能进化 -->
+        <article class="bento-card tilt" data-tilt>
+          <div class="bento-bg"><div class="orb orb-violet"></div></div>
+          <div class="bento-content">
+            <div class="bento-tag">自我进化</div>
+            <h3 class="bento-title">GEPA 技能进化引擎</h3>
+            <p class="bento-desc">基于 Reflective Evolution 自动生成变体，LLM-as-Judge 评分，≥1.1× 才部署。</p>
+            <div class="evo-line" aria-hidden="true">
+              <span class="evo-dot"></span>
+              <span class="evo-bar"></span>
+              <span class="evo-dot"></span>
+              <span class="evo-bar"></span>
+              <span class="evo-dot hl"></span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 定时 Agent -->
+        <article class="bento-card tilt" data-tilt>
+          <div class="bento-bg"><div class="orb orb-amber"></div></div>
+          <div class="bento-content">
+            <div class="bento-tag">自动化</div>
+            <h3 class="bento-title">Cron 定时 Agent</h3>
+            <p class="bento-desc">标准 cron 表达式调度，Agent 自主创建与执行，托盘可视化管理。</p>
+            <div class="cron-mono" aria-hidden="true">0 9 * * *</div>
+          </div>
+        </article>
+
+        <!-- 用户画像 -->
+        <article class="bento-card tilt" data-tilt>
+          <div class="bento-bg"><div class="orb orb-cyan"></div></div>
+          <div class="bento-content">
+            <div class="bento-tag">用户画像</div>
+            <h3 class="bento-title">学习你的编码风格</h3>
+            <p class="bento-desc">自动抽取技术栈、编码风格、沟通偏好，注入 system prompt，让 Agent 更懂你。</p>
+            <div class="profile-bars" aria-hidden="true">
+              <div class="bar"><span style="height:80%"></span></div>
+              <div class="bar"><span style="height:55%"></span></div>
+              <div class="bar"><span style="height:92%"></span></div>
+              <div class="bar"><span style="height:40%"></span></div>
+              <div class="bar"><span style="height:70%"></span></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 性能预算 -->
+        <article class="bento-card bento-sm tilt" data-tilt>
+          <div class="bento-bg"><div class="orb orb-violet"></div></div>
+          <div class="bento-content">
+            <div class="bento-tag">性能预算</div>
+            <h3 class="bento-title">极致响应</h3>
+            <p class="bento-desc">冷启动 ≤100ms · 单消息 ≤500ms · 流式 ≥30fps。</p>
+            <div class="perf-num">
+              <div><strong>100</strong><span>ms 冷启动</span></div>
+              <div><strong>500</strong><span>ms 单消息</span></div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============== STICKY STORY / WORKFLOW ============== -->
+    <section class="section workflow" id="workflow">
+      <div class="section-head">
+        <div class="section-label reveal-up" data-reveal>02 / FLOW</div>
+        <h2 class="section-title">
+          <span class="line mask-line"><span class="mask-text">从一个想法</span></span>
+          <span class="line mask-line"><span class="mask-text">到一段可运行代码。</span></span>
+        </h2>
+      </div>
+
+      <div class="story" id="story">
+        <div class="story-sticky">
+          <div class="story-visual" id="storyVisual">
+            <div class="story-window">
+              <div class="story-window-bar">
+                <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+                <span class="story-window-title">ZX-Code</span>
+              </div>
+              <div class="story-window-body">
+                <div class="story-step story-step-0 is-active" data-step="0">
+                  <div class="chat-bubble user">帮我在项目里加一个 JWT 登录功能</div>
+                  <div class="chat-bubble ai"><span class="typing">▌</span></div>
+                </div>
+                <div class="story-step story-step-1" data-step="1">
+                  <div class="tool-call">
+                    <span class="tool-name">read_file</span>
+                    <span class="tool-args">src/main/index.ts</span>
+                  </div>
+                  <div class="tool-call">
+                    <span class="tool-name">grep</span>
+                    <span class="tool-args">"auth|login|jwt"</span>
+                  </div>
+                  <div class="tool-call">
+                    <span class="tool-name">list_files</span>
+                    <span class="tool-args">src/main/auth/</span>
+                  </div>
+                </div>
+                <div class="story-step story-step-2" data-step="2">
+                  <div class="code-line"><span class="kw">import</span> jwt <span class="kw">from</span> <span class="str">'jsonwebtoken'</span>;</div>
+                  <div class="code-line"><span class="kw">export function</span> <span class="fn">verifyToken</span>(token: <span class="typ">string</span>) {</div>
+                  <div class="code-line indent">  <span class="kw">const</span> payload = jwt.<span class="fn">verify</span>(token, SECRET);</div>
+                  <div class="code-line indent">  <span class="kw">return</span> payload;</div>
+                  <div class="code-line">}</div>
+                </div>
+                <div class="story-step story-step-3" data-step="3">
+                  <div class="pet-celebrate">
+                    <div class="pet-face">
+                      <span class="pet-eye"></span><span class="pet-eye"></span>
+                      <span class="pet-mouth happy"></span>
+                    </div>
+                    <div class="pet-bubble">完成啦 ✦ 4 个文件已创建</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="story-steps">
+          <div class="story-step-text" data-step="0">
+            <div class="step-num">01</div>
+            <h3>你说一句话</h3>
+            <p>自然语言描述需求——"加个 JWT 登录"、"修这个 bug"、"重构这块"。
+            Agent 自动理解意图并规划执行路径，最多 20 次工具调用迭代。</p>
+          </div>
+          <div class="story-step-text" data-step="1">
+            <div class="step-num">02</div>
+            <h3>Agent 自主调用工具</h3>
+            <p>23 个内置工具可被自由组合：read_file / grep / list_files / run_command / edit / web_search / sub_agent …
+            流式工具调用——参数实时透传，文件写入过程即时可见。</p>
+          </div>
+          <div class="story-step-text" data-step="2">
+            <div class="step-num">03</div>
+            <h3>代码写入项目</h3>
+            <p>Hash-Anchored Edit 用 SHA3-8 行哈希消除 stale-line 错误。
+            AST-Grep + LSP 提供代码智能：诊断、跳转、引用、重命名一应俱全。</p>
+          </div>
+          <div class="story-step-text" data-step="3">
+            <div class="step-num">04</div>
+            <h3>桌宠为你庆祝</h3>
+            <p>任务完成后桌宠切换开心表情与动作。LLM 根据对话内容自动选择最合适的动作，让角色"活"起来。
+            开启 TTS 让 AI 伴侣用声音与你交流。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== COMPARE ============== -->
+    <section class="section compare" id="compare">
+      <div class="section-head">
+        <div class="section-label reveal-up" data-reveal>03 / DIFF</div>
+        <h2 class="section-title">
+          <span class="line mask-line"><span class="mask-text">为什么是 ZX-Code？</span></span>
+        </h2>
+        <p class="section-desc reveal-up" data-reveal>
+          与 OpenCode / Claude Code / Codex CLI 相比，ZX-Code 是唯一同时具备
+          「免 Key 国产大模型 + 3D 桌宠 + 九宫格 + 长期记忆 + 技能进化 + 定时 Agent」的桌面应用。
+        </p>
+      </div>
+
+      <div class="compare-table" data-reveal>
+        <div class="compare-row compare-head">
+          <div class="compare-cell">能力</div>
+          <div class="compare-cell hl">ZX-Code</div>
+          <div class="compare-cell">OpenCode</div>
+          <div class="compare-cell">Claude Code</div>
+          <div class="compare-cell">Codex CLI</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell">免 Key 用国产大模型</div>
+          <div class="compare-cell hl"><span class="yes">9 家</span></div>
+          <div class="compare-cell"><span class="no">仅 API</span></div>
+          <div class="compare-cell"><span class="no">仅 Claude</span></div>
+          <div class="compare-cell"><span class="no">仅 API</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell">3D 桌宠 & AI 伴侣</div>
+          <div class="compare-cell hl"><span class="yes">Live2D / VRM</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell">九宫格多面板工作台</div>
+          <div class="compare-cell hl"><span class="yes">9 格拖拽</span></div>
+          <div class="compare-cell"><span class="no">单面板</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell">长期记忆系统</div>
+          <div class="compare-cell hl"><span class="yes">记忆树 + SuperContext</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+          <div class="compare-cell"><span class="meh">有限</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell">技能进化引擎</div>
+          <div class="compare-cell hl"><span class="yes">GEPA + LLM-as-Judge</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell">定时 Agent (Cron)</div>
+          <div class="compare-cell hl"><span class="yes">支持</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell">用户画像学习</div>
+          <div class="compare-cell hl"><span class="yes">自动抽取</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+          <div class="compare-cell"><span class="no">无</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell">国内网络直连</div>
+          <div class="compare-cell hl"><span class="yes">免翻墙</span></div>
+          <div class="compare-cell"><span class="no">需代理</span></div>
+          <div class="compare-cell"><span class="no">需代理</span></div>
+          <div class="compare-cell"><span class="no">需代理</span></div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell">开源协议</div>
+          <div class="compare-cell hl"><span class="yes">GPL-3.0</span></div>
+          <div class="compare-cell"><span class="yes">MIT</span></div>
+          <div class="compare-cell"><span class="no">闭源</span></div>
+          <div class="compare-cell"><span class="yes">Apache 2.0</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== STATS ============== -->
+    <section class="section stats">
+      <div class="stats-grid">
+        <div class="stat-card reveal-up" data-reveal>
+          <div class="stat-num"><span data-count="23">0</span></div>
+          <div class="stat-lbl">内置工具</div>
+          <div class="stat-desc">读写 · 搜索 · 执行 · 派发</div>
+        </div>
+        <div class="stat-card reveal-up" data-reveal>
+          <div class="stat-num"><span data-count="9">0</span></div>
+          <div class="stat-lbl">免 Key 大模型</div>
+          <div class="stat-desc">DeepSeek / GLM / Kimi / 通义 / MiniMax …</div>
+        </div>
+        <div class="stat-card reveal-up" data-reveal>
+          <div class="stat-num"><span data-count="673">0</span></div>
+          <div class="stat-lbl">测试用例</div>
+          <div class="stat-desc">Vitest · Testing Library</div>
+        </div>
+        <div class="stat-card reveal-up" data-reveal>
+          <div class="stat-num"><span data-count="100">0</span><span class="unit">ms</span></div>
+          <div class="stat-lbl">冷启动预算</div>
+          <div class="stat-desc">性能优先架构</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== DEVELOPER ============== -->
+    <section class="section developer" id="developer">
+      <div class="section-head">
+        <div class="section-label reveal-up" data-reveal>04 / MAKER</div>
+        <h2 class="section-title">
+          <span class="line mask-line"><span class="mask-text">背后的开发者</span></span>
+        </h2>
+      </div>
+
+      <div class="dev-card tilt" data-tilt data-reveal>
+        <div class="dev-bg">
+          <div class="orb orb-violet"></div>
+          <div class="orb orb-cyan"></div>
+        </div>
+        <div class="dev-content">
+          <div class="dev-avatar" aria-hidden="true">
+            <img src="https://github.com/zouyuxuan122.png" alt="@Nefert GitHub 头像" loading="lazy" />
+          </div>
+          <div class="dev-info">
+            <div class="dev-name">@Nefert</div>
+            <div class="dev-role">开发 & UI 设计 · ZX-Code Author</div>
+            <p class="dev-bio">
+              独立打造 ZX-Code——一款把 AI 编程、3D 桌宠陪伴与九宫格工作台融为一体的桌面应用。
+              坚信 AI 应该真正动手帮你写代码，而不是只动嘴。
+            </p>
+            <div class="dev-links">
+              <a class="dev-link magnetic" href="https://github.com/zouyuxuan122" target="_blank" rel="noopener" data-cursor="hover">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2 0-.4-.5-1.6.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.3v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
+                <div class="dev-link-text">
+                  <span class="dev-link-label">GitHub</span>
+                  <span class="dev-link-handle">@zouyuxuan122</span>
+                </div>
+                <svg class="dev-link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </a>
+              <a class="dev-link magnetic" href="https://b23.tv/ZqiibER" target="_blank" rel="noopener" data-cursor="hover">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.8 4.2c-.5 0-.9.1-1.3.3l-2.6 1.7c-.4-.1-.9-.1-1.3-.1H8.4c-.4 0-.9 0-1.3.1L4.5 4.5c-.4-.2-.8-.3-1.3-.3-.5 0-1 .2-1.4.5-.6.5-.9 1.3-.8 2.2l.5 4.4c-.2.4-.3.9-.3 1.4v3.5c0 1.5 1.2 2.7 2.7 2.7h12.2c1.5 0 2.7-1.2 2.7-2.7v-3.5c0-.5-.1-1-.3-1.4l.5-4.4c.1-.9-.2-1.7-.8-2.2-.4-.3-.9-.5-1.4-.5zm-9.5 8.4c-.7 0-1.2-.5-1.2-1.2s.5-1.2 1.2-1.2 1.2.5 1.2 1.2-.5 1.2-1.2 1.2zm7.4 0c-.7 0-1.2-.5-1.2-1.2s.5-1.2 1.2-1.2 1.2.5 1.2 1.2-.5 1.2-1.2 1.2z"/></svg>
+                <div class="dev-link-text">
+                  <span class="dev-link-label">哔哩哔哩</span>
+                  <span class="dev-link-handle">B站主页 @Nefert</span>
+                </div>
+                <svg class="dev-link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== FINAL CTA ============== -->
+    <section class="section cta">
+      <div class="cta-bg" aria-hidden="true">
+        <div class="orb orb-violet big"></div>
+        <div class="orb orb-cyan big"></div>
+        <div class="orb orb-amber big"></div>
+      </div>
+      <div class="cta-content">
+        <h2 class="cta-title">
+          <span class="line mask-line"><span class="mask-text">让 AI 真正</span></span>
+          <span class="line mask-line"><span class="mask-text">动手帮你写代码。</span></span>
+        </h2>
+        <p class="cta-desc reveal-up" data-reveal>免费 · 开源 · GPL-3.0 · Windows x64</p>
+        <div class="cta-actions reveal-up" data-reveal>
+          <a class="btn btn-primary btn-lg magnetic" href="https://github.com/zouyuxuan122/ZX-code/releases/latest" target="_blank" rel="noopener" data-cursor="hover">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l7 7 7-7M12 19V3"/></svg>
+            下载 ZX-Code
+          </a>
+          <a class="btn btn-ghost btn-lg magnetic" href="https://github.com/zouyuxuan122/ZX-code" target="_blank" rel="noopener" data-cursor="hover">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2 0-.4-.5-1.6.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.3v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
+            Star on GitHub
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============== FOOTER ============== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img class="nav-mark" src="favicon.png" alt="" aria-hidden="true" />
+        <div>
+          <div class="footer-name">ZX-Code</div>
+          <div class="footer-tag">全能 AI 编程 Agent · 桌宠陪伴 · 九宫格工作台</div>
+        </div>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <div class="footer-col-title">项目</div>
+          <a href="https://github.com/zouyuxuan122/ZX-code" target="_blank" rel="noopener" data-cursor="hover">GitHub 仓库</a>
+          <a href="https://github.com/zouyuxuan122/ZX-code/releases/latest" target="_blank" rel="noopener" data-cursor="hover">下载安装包</a>
+          <a href="https://github.com/zouyuxuan122/ZX-code/releases" target="_blank" rel="noopener" data-cursor="hover">更新日志</a>
+          <a href="https://github.com/zouyuxuan122/ZX-code/issues" target="_blank" rel="noopener" data-cursor="hover">报告问题</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">开发者</div>
+          <a href="https://github.com/zouyuxuan122" target="_blank" rel="noopener" data-cursor="hover">GitHub 主页</a>
+          <a href="https://b23.tv/ZqiibER" target="_blank" rel="noopener" data-cursor="hover">哔哩哔哩主页</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">协议</div>
+          <a href="https://github.com/zouyuxuan122/ZX-code/blob/main/LICENSE" target="_blank" rel="noopener" data-cursor="hover">GPL-3.0 License</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 ZX-Code · Built with care by @Nefert</span>
+      <span>Electron 33 · React 19 · TypeScript 5.6</span>
+    </div>
+  </footer>
+
+  <!-- ============== SCRIPTS ============== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
