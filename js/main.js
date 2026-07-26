@@ -1,5 +1,6 @@
 /* ============================================================
    ZX-Code Showcase · main.js
+   Multi-page · warm editorial system · instant nav · particle theme switch
    ============================================================ */
 
 (function () {
@@ -8,61 +9,56 @@
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
 
-  /* ---------- LOADER ---------- */
-  const loader = document.getElementById('loader');
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      if (loader) loader.classList.add('is-done');
-      startHeroIntro();
-    }, 1400);
+  /* ---------- THEME SYNC (bfcache-safe) ---------- */
+  // Re-apply theme from localStorage on every script execution.
+  // Also handles bfcache restoration where the head script doesn't re-run.
+  function syncTheme() {
+    try {
+      var t = localStorage.getItem('zx-theme');
+      if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      else document.documentElement.removeAttribute('data-theme');
+    } catch (e) {}
+  }
+  syncTheme();
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) syncTheme();
   });
 
-  /* ---------- LENIS SMOOTH SCROLL ---------- */
-  let lenis = null;
-  if (typeof Lenis !== 'undefined' && !prefersReducedMotion) {
-    lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
+  /* ---------- ACTIVE NAV (per page) ---------- */
+  (function setActiveNav() {
+    let path = location.pathname.split('/').pop();
+    if (!path) path = 'index.html';
+    document.querySelectorAll('.nav-links a, .mobile-menu a').forEach((a) => {
+      const href = a.getAttribute('href');
+      if (href && (href === path)) a.classList.add('is-active');
     });
+  })();
 
-    function raf(time) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-    requestAnimationFrame(raf);
+  /* ---------- LOADER (fast) ---------- */
+  const loader = document.getElementById('loader');
+  const isFirstVisit = !sessionStorage.getItem('zx-visited');
 
-    // Anchor links
-    document.querySelectorAll('a[href^="#"]').forEach((a) => {
-      a.addEventListener('click', (e) => {
-        const id = a.getAttribute('href');
-        if (id.length > 1) {
-          const target = document.querySelector(id);
-          if (target) {
-            e.preventDefault();
-            lenis.scrollTo(target, { offset: -60, duration: 1.4 });
-            // close mobile menu
-            const mm = document.getElementById('mobileMenu');
-            const burger = document.getElementById('navBurger');
-            if (mm) mm.classList.remove('is-open');
-            if (burger) burger.classList.remove('is-open');
-          }
-        }
-      });
-    });
+  function hideLoader() {
+    if (loader) loader.classList.add('is-done');
+    revealPageEnter();
   }
 
-  /* ---------- GSAP + ScrollTrigger ---------- */
-  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-    gsap.registerPlugin(ScrollTrigger);
+  if (isFirstVisit) {
+    sessionStorage.setItem('zx-visited', '1');
+    window.addEventListener('load', () => {
+      setTimeout(hideLoader, 680);
+    });
+    setTimeout(hideLoader, 2200);
+  } else {
+    hideLoader();
+  }
 
-    if (lenis) {
-      lenis.on('scroll', ScrollTrigger.update);
-      gsap.ticker.add((time) => lenis.raf(time * 1000));
-      gsap.ticker.lagSmoothing(0);
-    }
+  /* ---------- PAGE ENTER ---------- */
+  function revealPageEnter() {
+    const els = document.querySelectorAll('.page-enter');
+    els.forEach((el, i) => {
+      setTimeout(() => el.classList.add('is-in'), i * 55);
+    });
   }
 
   /* ---------- CUSTOM CURSOR ---------- */
@@ -73,52 +69,40 @@
     let rx = mx, ry = my;
     let dx = mx, dy = my;
 
-    document.addEventListener('mousemove', (e) => {
-      mx = e.clientX; my = e.clientY;
-    });
+    document.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
     document.addEventListener('mousedown', () => ring && ring.classList.add('is-down'));
     document.addEventListener('mouseup', () => ring && ring.classList.remove('is-down'));
 
     function tickCursor() {
       dx += (mx - dx) * 0.6;
       dy += (my - dy) * 0.6;
-      rx += (mx - rx) * 0.15;
-      ry += (my - ry) * 0.15;
-      if (dot) {
-        dot.style.transform = `translate(${dx}px, ${dy}px) translate(-50%, -50%)`;
-      }
-      if (ring) {
-        ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%, -50%)`;
-      }
+      rx += (mx - rx) * 0.16;
+      ry += (my - ry) * 0.16;
+      if (dot) dot.style.transform = `translate(${dx}px, ${dy}px) translate(-50%, -50%)`;
+      if (ring) ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%, -50%)`;
       requestAnimationFrame(tickCursor);
     }
     tickCursor();
 
-    // Hover state
-    document.querySelectorAll('[data-cursor="hover"], a, button').forEach((el) => {
-      el.addEventListener('mouseenter', () => ring && ring.classList.add('is-hover'));
-      el.addEventListener('mouseleave', () => ring && ring.classList.remove('is-hover'));
-    });
-  }
-
-  /* ---------- SCROLL PROGRESS + NAV STATE ---------- */
-  const nav = document.getElementById('nav');
-  const progress = document.getElementById('scrollProgress');
-
-  function onScrollUpdate() {
-    const h = document.documentElement;
-    const scrolled = h.scrollTop || document.body.scrollTop;
-    const total = h.scrollHeight - h.clientHeight;
-    const pct = total > 0 ? (scrolled / total) * 100 : 0;
-    if (progress) progress.style.width = pct + '%';
-
-    if (nav) {
-      if (scrolled > 30) nav.classList.add('is-scrolled');
-      else nav.classList.remove('is-scrolled');
+    function bindHover() {
+      document.querySelectorAll('a, button, [data-cursor="hover"]').forEach((el) => {
+        if (el.__zxhover) return;
+        el.__zxhover = true;
+        el.addEventListener('mouseenter', () => ring && ring.classList.add('is-hover'));
+        el.addEventListener('mouseleave', () => ring && ring.classList.remove('is-hover'));
+      });
     }
+    bindHover();
   }
-  window.addEventListener('scroll', onScrollUpdate, { passive: true });
-  onScrollUpdate();
+
+  /* ---------- NAV SCROLL STATE ---------- */
+  const nav = document.getElementById('nav');
+  function onScroll() {
+    const s = window.scrollY || document.documentElement.scrollTop;
+    if (nav) nav.classList.toggle('is-scrolled', s > 24);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 
   /* ---------- MOBILE MENU ---------- */
   const burger = document.getElementById('navBurger');
@@ -130,189 +114,71 @@
     });
   }
 
-  /* ---------- HERO PARTICLES ---------- */
-  const particlesContainer = document.getElementById('heroParticles');
-  if (particlesContainer && !prefersReducedMotion) {
-    const COUNT = isTouch ? 18 : 38;
-    const particles = [];
-    for (let i = 0; i < COUNT; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      const size = Math.random() * 3 + 1;
-      p.style.width = size + 'px';
-      p.style.height = size + 'px';
-      p.style.left = Math.random() * 100 + '%';
-      p.style.top = Math.random() * 100 + '%';
-      p.style.opacity = (Math.random() * 0.5 + 0.2).toString();
-      const colors = ['rgba(255,255,255,0.7)', 'rgba(124,92,255,0.7)', 'rgba(6,182,212,0.7)', 'rgba(245,158,11,0.7)'];
-      p.style.background = colors[Math.floor(Math.random() * colors.length)];
-      particlesContainer.appendChild(p);
-      particles.push({
-        el: p,
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        baseOpacity: parseFloat(p.style.opacity),
+  /* ---------- PAGE TRANSITION (native nav, bfcache-safe) ---------- */
+  // Let the browser handle navigation natively — the is-returning class
+  // in the head script hides the loader for instant page loads.
+  // We only close the mobile menu on click; no preventDefault.
+  document.querySelectorAll('a').forEach((a) => {
+    const href = a.getAttribute('href');
+    if (!href) return;
+    const isInternal = /\.html(\?.*)?$/.test(href) && !href.startsWith('http') && a.target !== '_blank';
+    if (isInternal) {
+      a.addEventListener('click', () => {
+        if (mm) mm.classList.remove('is-open');
+        if (burger) burger.classList.remove('is-open');
       });
     }
-
-    let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
-    document.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX; mouseY = e.clientY;
-    });
-
-    function tickParticles() {
-      const w = particlesContainer.offsetWidth;
-      const h = particlesContainer.offsetHeight;
-      particles.forEach((p) => {
-        // Parallax pull towards mouse
-        const dx = mouseX - (p.x + w * 0.0);
-        const dy = mouseY - (p.y + h * 0.0);
-        p.vx += dx * 0.00002;
-        p.vy += dy * 0.00002;
-        p.vx *= 0.99; p.vy *= 0.99;
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
-        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
-        p.el.style.transform = `translate3d(${p.x - w / 2}px, ${p.y - h / 2}px, 0)`;
-      });
-      requestAnimationFrame(tickParticles);
-    }
-    // Init positions relative to center
-    particles.forEach((p) => {
-      p.x = Math.random() * particlesContainer.offsetWidth;
-      p.y = Math.random() * particlesContainer.offsetHeight;
-    });
-    tickParticles();
-  }
-
-  /* ---------- HERO PARALLAX (mouse) ---------- */
-  if (!isTouch && !prefersReducedMotion) {
-    const heroGlows = document.querySelectorAll('.hero-glow');
-    const heroGrid = document.querySelector('.hero-grid');
-    const heroContent = document.querySelector('.hero-content');
-    document.querySelector('.hero')?.addEventListener('mousemove', (e) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      if (heroGrid) heroGrid.style.transform = `perspective(800px) rotateX(${60 + y * 6}deg) translateY(${20 + y * 10}px) translateX(${-x * 20}px)`;
-      heroGlows.forEach((g, i) => {
-        const factor = (i + 1) * 18;
-        g.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
-      });
-      if (heroContent) heroContent.style.transform = `translate(${x * -6}px, ${y * -6}px)`;
-    });
-  }
-
-  /* ---------- HERO INTRO ANIMATION ---------- */
-  function startHeroIntro() {
-    if (typeof gsap === 'undefined' || prefersReducedMotion) {
-      // Fallback: just show everything
-      document.querySelectorAll('.hero .mask-text').forEach((el) => {
-        el.style.transform = 'translateY(0)';
-      });
-      document.querySelectorAll('.hero .reveal-up').forEach((el) => el.classList.add('is-visible'));
-      return;
-    }
-
-    const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
-    tl.to('.hero-title .mask-text', {
-      y: 0,
-      duration: 1.2,
-      stagger: 0.1,
-    }, 0.1)
-      .to('.hero .reveal-up', {
-        opacity: 1,
-        y: 0,
-        duration: 1.0,
-        stagger: 0.12,
-      }, 0.4);
-  }
-
-  /* ---------- REVEAL ON SCROLL ---------- */
-  const revealEls = document.querySelectorAll('[data-reveal]');
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-        // Also reveal sibling mask-lines within section heads
-        const section = entry.target.closest('.section-head, .cta');
-        if (section) {
-          section.querySelectorAll('.mask-line').forEach((l) => l.classList.add('is-visible'));
-        }
-        io.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
-
-  revealEls.forEach((el) => io.observe(el));
-
-  // Also observe section titles directly (in case data-reveal not present)
-  document.querySelectorAll('.section-title, .cta-title').forEach((title) => {
-    const titleIO = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.querySelectorAll('.mask-line').forEach((l) => l.classList.add('is-visible'));
-          titleIO.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.2 });
-    titleIO.observe(title);
   });
 
+  /* ---------- REVEAL ON SCROLL ---------- */
+  const revealEls = document.querySelectorAll('.reveal');
+  if (revealEls.length) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
+    revealEls.forEach((el) => io.observe(el));
+  }
+
   /* ---------- COUNT-UP ---------- */
-  function animateCount(el, target, duration = 1.6) {
-    const start = 0;
+  function animateCount(el, target, duration = 1.5) {
     const startTime = performance.now();
-    const ease = (t) => 1 - Math.pow(1 - t, 4); // easeOutQuart
+    const ease = (t) => 1 - Math.pow(1 - t, 4);
     function step(now) {
       const elapsed = (now - startTime) / 1000;
       const t = Math.min(1, elapsed / duration);
-      const value = Math.round(start + (target - start) * ease(t));
-      el.textContent = value.toString();
+      el.textContent = Math.round(target * ease(t)).toString();
       if (t < 1) requestAnimationFrame(step);
       else el.textContent = target.toString();
     }
     requestAnimationFrame(step);
   }
-
   const countEls = document.querySelectorAll('[data-count]');
-  const countIO = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const target = parseInt(entry.target.getAttribute('data-count'), 10);
-        animateCount(entry.target, target);
-        countIO.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.4 });
-  countEls.forEach((el) => countIO.observe(el));
-
-  /* ---------- 3D TILT ---------- */
-  if (!isTouch && !prefersReducedMotion) {
-    document.querySelectorAll('[data-tilt]').forEach((card) => {
-      const strength = 6;
-      card.addEventListener('mousemove', (e) => {
-        const rect = card.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width - 0.5;
-        const y = (e.clientY - rect.top) / rect.height - 0.5;
-        card.style.transform = `perspective(1000px) rotateY(${x * strength}deg) rotateX(${-y * strength}deg) translateZ(0)`;
+  if (countEls.length) {
+    const cio = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const target = parseInt(entry.target.getAttribute('data-count'), 10);
+          animateCount(entry.target, target);
+          cio.unobserve(entry.target);
+        }
       });
-      card.addEventListener('mouseleave', () => {
-        card.style.transform = 'perspective(1000px) rotateY(0) rotateX(0) translateZ(0)';
-      });
-    });
+    }, { threshold: 0.5 });
+    countEls.forEach((el) => cio.observe(el));
   }
 
   /* ---------- MAGNETIC BUTTONS ---------- */
   if (!isTouch && !prefersReducedMotion) {
     document.querySelectorAll('.magnetic').forEach((btn) => {
-      const strength = 0.35;
+      const strength = 0.32;
       btn.addEventListener('mousemove', (e) => {
-        const rect = btn.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
+        const r = btn.getBoundingClientRect();
+        const x = e.clientX - r.left - r.width / 2;
+        const y = e.clientY - r.top - r.height / 2;
         btn.style.transform = `translate(${x * strength}px, ${y * strength}px)`;
       });
       btn.addEventListener('mouseleave', () => {
@@ -321,61 +187,194 @@
     });
   }
 
-  /* ---------- STORY STICKY STEP SYNC ---------- */
-  if (typeof ScrollTrigger !== 'undefined' && !prefersReducedMotion) {
-    const steps = document.querySelectorAll('.story-step-text');
-    const visualSteps = document.querySelectorAll('.story-step');
-    const storyVisual = document.getElementById('storyVisual');
-
-    steps.forEach((step, i) => {
-      ScrollTrigger.create({
-        trigger: step,
-        start: 'top center',
-        end: 'bottom center',
-        onEnter: () => setActiveStep(i),
-        onEnterBack: () => setActiveStep(i),
+  /* ---------- HERO PARALLAX (mouse) ---------- */
+  if (!isTouch && !prefersReducedMotion) {
+    const heroVisual = document.querySelector('.hero-visual');
+    const hero = document.querySelector('.hero');
+    if (hero && heroVisual) {
+      hero.addEventListener('mousemove', (e) => {
+        const rect = hero.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        heroVisual.style.transform = `translate(${x * -10}px, ${y * -10}px) scale(1.01)`;
       });
-    });
+      hero.addEventListener('mouseleave', () => {
+        heroVisual.style.transform = '';
+      });
+    }
+  }
 
-    function setActiveStep(index) {
-      steps.forEach((s, i) => s.classList.toggle('is-active', i === index));
-      visualSteps.forEach((s, i) => s.classList.toggle('is-active', i === index));
-      if (storyVisual && typeof gsap !== 'undefined') {
-        gsap.fromTo(storyVisual,
-          { scale: 0.98, opacity: 0.8 },
-          { scale: 1, opacity: 1, duration: 0.5, ease: 'expo.out' }
-        );
-      }
+  /* ============================================================
+     THEME TOGGLE · particle burst -> reassemble
+     Click button -> particles explode outward from the button,
+     theme flips at peak coverage, particles implode back to
+     reveal the reassembled page.
+     ============================================================ */
+  const themeBtn = document.getElementById('themeToggle');
+  const pCanvas = document.getElementById('particleCanvas');
+
+  function currentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+  function applyTheme(t, persist) {
+    if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+    if (persist) {
+      try { localStorage.setItem('zx-theme', t); } catch (e) {}
+    }
+  }
+
+  function brandPalette() {
+    const cs = getComputedStyle(document.documentElement);
+    const pick = (n, fb) => {
+      const v = cs.getPropertyValue(n).trim();
+      return v || fb;
+    };
+    return [
+      pick('--brand', '#b8542f'),
+      pick('--brand-deep', '#8c3a1b'),
+      pick('--brand-bright', '#d5663c'),
+      pick('--ink', '#181612'),
+      '#e8a06a'
+    ];
+  }
+
+  let burstRunning = false;
+  function particleBurst(originX, originY, onPeak) {
+    if (!pCanvas) { if (onPeak) onPeak(); return; }
+    const ctx = pCanvas.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = window.innerWidth, H = window.innerHeight;
+    pCanvas.width = W * dpr;
+    pCanvas.height = H * dpr;
+    pCanvas.style.width = W + 'px';
+    pCanvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    pCanvas.classList.add('is-active');
+    const palette = brandPalette();
+
+    // max radius so particles can cover the farthest corner
+    const maxR = Math.hypot(Math.max(originX, W - originX), Math.max(originY, H - originY)) + 40;
+
+    const COUNT = 220;
+    const parts = [];
+    for (let i = 0; i < COUNT; i++) {
+      const ang = (i / COUNT) * Math.PI * 2 + Math.random() * 0.18;
+      const distJitter = 0.55 + Math.random() * 0.6;
+      parts.push({
+        ang,
+        distMul: distJitter,
+        r: 1.2 + Math.random() * 3.2,
+        color: palette[(Math.random() * palette.length) | 0],
+        spin: (Math.random() - 0.5) * 0.04,
+        wobble: Math.random() * Math.PI * 2
+      });
     }
 
-    // Initial
-    if (steps.length) setActiveStep(0);
-  } else {
-    // Fallback: just show step 0
-    document.querySelectorAll('.story-step-text').forEach((s, i) => {
-      if (i === 0) s.classList.add('is-active');
-    });
-    document.querySelectorAll('.story-step').forEach((s, i) => {
-      if (i === 0) s.classList.add('is-active');
-    });
-  }
+    const DURATION = 820; // ms
+    const start = performance.now();
+    let peaked = false;
+    burstRunning = true;
 
-  /* ---------- SECTION MASK-LINE FALLBACK ---------- */
-  // Some sections don't have data-reveal on the title; reveal on first paint if visible
-  function revealInitialVisible() {
-    document.querySelectorAll('.mask-line').forEach((line) => {
-      const rect = line.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0) {
-        // Will be handled by IO; skip
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+    function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+    function frame(now) {
+      const t = Math.min(1, (now - start) / DURATION);
+      ctx.clearRect(0, 0, W, H);
+
+      // coverage: explode 0->0.5, implode 0.5->1
+      let coverage;
+      if (t < 0.5) {
+        coverage = easeOutCubic(t / 0.5); // 0 -> 1
+      } else {
+        coverage = 1 - easeInOutCubic((t - 0.5) / 0.5); // 1 -> 0
       }
-    });
-  }
-  revealInitialVisible();
 
-  /* ---------- REFRESH SCROLLTRIGGER ON LOAD ---------- */
-  window.addEventListener('load', () => {
-    if (typeof ScrollTrigger !== 'undefined') {
-      setTimeout(() => ScrollTrigger.refresh(), 200);
+      // global alpha: fade in fast, hold, fade out near end
+      let gAlpha;
+      if (t < 0.12) gAlpha = t / 0.12;
+      else if (t > 0.82) gAlpha = 1 - (t - 0.82) / 0.18;
+      else gAlpha = 1;
+      gAlpha = Math.max(0, Math.min(1, gAlpha));
+
+      ctx.globalAlpha = gAlpha;
+
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        p.wobble += 0.18;
+        const wobbleAmt = Math.sin(p.wobble) * 6 * coverage;
+        const rad = coverage * maxR * p.distMul;
+        const a = p.ang + p.spin * t * 30;
+        const x = originX + Math.cos(a) * rad + Math.cos(p.wobble) * wobbleAmt;
+        const y = originY + Math.sin(a) * rad + Math.sin(p.wobble) * wobbleAmt;
+        const rad2 = p.r * (0.6 + coverage * 0.9);
+
+        ctx.beginPath();
+        ctx.fillStyle = p.color;
+        ctx.arc(x, y, rad2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // soft core glow at origin during explosion
+      if (t < 0.5) {
+        const glowR = 30 + coverage * 80;
+        const g = ctx.createRadialGradient(originX, originY, 0, originX, originY, glowR);
+        g.addColorStop(0, 'rgba(255,255,255,0.5)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(originX, originY, glowR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+
+      // flip theme at peak coverage
+      if (!peaked && t >= 0.46) {
+        peaked = true;
+        if (onPeak) onPeak();
+      }
+
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        ctx.clearRect(0, 0, W, H);
+        pCanvas.classList.remove('is-active');
+        burstRunning = false;
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function toggleTheme() {
+    const next = currentTheme() === 'dark' ? 'light' : 'dark';
+    if (prefersReducedMotion || !pCanvas || burstRunning) {
+      applyTheme(next, true);
+      return;
+    }
+    let ox = window.innerWidth / 2, oy = window.innerHeight / 2;
+    if (themeBtn) {
+      const r = themeBtn.getBoundingClientRect();
+      ox = r.left + r.width / 2;
+      oy = r.top + r.height / 2;
+    }
+    particleBurst(ox, oy, () => applyTheme(next, true));
+  }
+
+  if (themeBtn) {
+    themeBtn.addEventListener('click', toggleTheme);
+  }
+
+  // keep canvas crisp on resize
+  window.addEventListener('resize', () => {
+    if (pCanvas && !burstRunning) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      pCanvas.width = window.innerWidth * dpr;
+      pCanvas.height = window.innerHeight * dpr;
+      pCanvas.style.width = window.innerWidth + 'px';
+      pCanvas.style.height = window.innerHeight + 'px';
     }
   });
 
