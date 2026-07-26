@@ -10,3 +10,9 @@ desktop.ini
 
 # Logs
 *.log
+
+# Auto-generated test artifacts
+*.html
+!index.html
+uploads/
+.uploads

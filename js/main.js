@@ -1,6 +1,6 @@
 /* ============================================================
    ZX-Code Showcase · main.js
-   Multi-page · warm editorial system · instant nav · particle theme switch
+   Single-page · warm editorial system · hash routing · particle theme switch
    ============================================================ */
 
 (function () {
@@ -10,8 +10,6 @@
   const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
 
   /* ---------- THEME SYNC (bfcache-safe) ---------- */
-  // Re-apply theme from localStorage on every script execution.
-  // Also handles bfcache restoration where the head script doesn't re-run.
   function syncTheme() {
     try {
       var t = localStorage.getItem('zx-theme');
@@ -24,15 +22,106 @@
     if (event.persisted) syncTheme();
   });
 
-  /* ---------- ACTIVE NAV (per page) ---------- */
-  (function setActiveNav() {
-    let path = location.pathname.split('/').pop();
-    if (!path) path = 'index.html';
+  /* ---------- SINGLE-PAGE ROUTING ---------- */
+  const PAGES = ['home', 'features', 'workflow', 'compare', 'developer'];
+
+  function pageIdFromHash() {
+    let h = (location.hash || '').replace(/^#/, '');
+    return PAGES.indexOf(h) >= 0 ? h : 'home';
+  }
+
+  function updateNavActive(id) {
     document.querySelectorAll('.nav-links a, .mobile-menu a').forEach((a) => {
-      const href = a.getAttribute('href');
-      if (href && (href === path)) a.classList.add('is-active');
+      const p = a.getAttribute('data-page');
+      a.classList.toggle('is-active', p === id);
     });
-  })();
+  }
+
+  /* persistent observers (re-used across page switches) */
+  const revealIO = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        revealIO.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
+
+  const countIO = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const target = parseInt(entry.target.getAttribute('data-count'), 10);
+        animateCount(entry.target, target);
+        countIO.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  function revealPageEnter(container) {
+    const els = container.querySelectorAll('.page-enter');
+    els.forEach((el) => el.classList.remove('is-in'));
+    // force reflow so transition replays
+    void container.offsetWidth;
+    els.forEach((el, i) => {
+      setTimeout(() => el.classList.add('is-in'), i * 55);
+    });
+  }
+
+  function armReveal(container) {
+    container.querySelectorAll('.reveal').forEach((el) => {
+      el.classList.remove('is-visible');
+      revealIO.observe(el);
+    });
+    container.querySelectorAll('[data-count]').forEach((el) => {
+      el.textContent = '0';
+      countIO.observe(el);
+    });
+  }
+
+  function activatePage(id, opts) {
+    opts = opts || {};
+    let target = document.querySelector('.page[data-page-id="' + id + '"]');
+    if (!target) { id = 'home'; target = document.querySelector('.page[data-page-id="home"]'); }
+
+    document.querySelectorAll('.page').forEach((p) => {
+      p.hidden = (p !== target);
+    });
+
+    updateNavActive(id);
+    window.scrollTo(0, 0);
+
+    // re-trigger entrance animations for the newly shown page
+    revealPageEnter(target);
+    armReveal(target);
+
+    // close mobile menu if open
+    const mm = document.getElementById('mobileMenu');
+    const burger = document.getElementById('navBurger');
+    if (mm) mm.classList.remove('is-open');
+    if (burger) burger.classList.remove('is-open');
+  }
+
+  // intercept in-page navigation links
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-page]');
+    if (!a) return;
+    const id = a.getAttribute('data-page');
+    if (PAGES.indexOf(id) < 0) return;
+    e.preventDefault();
+    if (location.hash === '#' + id) {
+      // same page: just scroll top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    location.hash = '#' + id; // triggers hashchange
+  });
+
+  window.addEventListener('hashchange', () => {
+    activatePage(pageIdFromHash());
+  });
+
+  // initial route
+  activatePage(pageIdFromHash());
 
   /* ---------- LOADER (fast) ---------- */
   const loader = document.getElementById('loader');
@@ -40,7 +129,6 @@
 
   function hideLoader() {
     if (loader) loader.classList.add('is-done');
-    revealPageEnter();
   }
 
   if (isFirstVisit) {
@@ -51,14 +139,6 @@
     setTimeout(hideLoader, 2200);
   } else {
     hideLoader();
-  }
-
-  /* ---------- PAGE ENTER ---------- */
-  function revealPageEnter() {
-    const els = document.querySelectorAll('.page-enter');
-    els.forEach((el, i) => {
-      setTimeout(() => el.classList.add('is-in'), i * 55);
-    });
   }
 
   /* ---------- CUSTOM CURSOR ---------- */
@@ -114,36 +194,6 @@
     });
   }
 
-  /* ---------- PAGE TRANSITION (native nav, bfcache-safe) ---------- */
-  // Let the browser handle navigation natively — the is-returning class
-  // in the head script hides the loader for instant page loads.
-  // We only close the mobile menu on click; no preventDefault.
-  document.querySelectorAll('a').forEach((a) => {
-    const href = a.getAttribute('href');
-    if (!href) return;
-    const isInternal = /\.html(\?.*)?$/.test(href) && !href.startsWith('http') && a.target !== '_blank';
-    if (isInternal) {
-      a.addEventListener('click', () => {
-        if (mm) mm.classList.remove('is-open');
-        if (burger) burger.classList.remove('is-open');
-      });
-    }
-  });
-
-  /* ---------- REVEAL ON SCROLL ---------- */
-  const revealEls = document.querySelectorAll('.reveal');
-  if (revealEls.length) {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible');
-          io.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
-    revealEls.forEach((el) => io.observe(el));
-  }
-
   /* ---------- COUNT-UP ---------- */
   function animateCount(el, target, duration = 1.5) {
     const startTime = performance.now();
@@ -156,19 +206,6 @@
       else el.textContent = target.toString();
     }
     requestAnimationFrame(step);
-  }
-  const countEls = document.querySelectorAll('[data-count]');
-  if (countEls.length) {
-    const cio = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const target = parseInt(entry.target.getAttribute('data-count'), 10);
-          animateCount(entry.target, target);
-          cio.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.5 });
-    countEls.forEach((el) => cio.observe(el));
   }
 
   /* ---------- MAGNETIC BUTTONS ---------- */
@@ -189,8 +226,8 @@
 
   /* ---------- HERO PARALLAX (mouse) ---------- */
   if (!isTouch && !prefersReducedMotion) {
-    const heroVisual = document.querySelector('.hero-visual');
     const hero = document.querySelector('.hero');
+    const heroVisual = document.querySelector('.hero-visual');
     if (hero && heroVisual) {
       hero.addEventListener('mousemove', (e) => {
         const rect = hero.getBoundingClientRect();
@@ -206,9 +243,6 @@
 
   /* ============================================================
      THEME TOGGLE · particle burst -> reassemble
-     Click button -> particles explode outward from the button,
-     theme flips at peak coverage, particles implode back to
-     reveal the reassembled page.
      ============================================================ */
   const themeBtn = document.getElementById('themeToggle');
   const pCanvas = document.getElementById('particleCanvas');
@@ -254,7 +288,6 @@
     pCanvas.classList.add('is-active');
     const palette = brandPalette();
 
-    // max radius so particles can cover the farthest corner
     const maxR = Math.hypot(Math.max(originX, W - originX), Math.max(originY, H - originY)) + 40;
 
     const COUNT = 220;
@@ -272,7 +305,7 @@
       });
     }
 
-    const DURATION = 820; // ms
+    const DURATION = 820;
     const start = performance.now();
     let peaked = false;
     burstRunning = true;
@@ -284,15 +317,13 @@
       const t = Math.min(1, (now - start) / DURATION);
       ctx.clearRect(0, 0, W, H);
 
-      // coverage: explode 0->0.5, implode 0.5->1
       let coverage;
       if (t < 0.5) {
-        coverage = easeOutCubic(t / 0.5); // 0 -> 1
+        coverage = easeOutCubic(t / 0.5);
       } else {
-        coverage = 1 - easeInOutCubic((t - 0.5) / 0.5); // 1 -> 0
+        coverage = 1 - easeInOutCubic((t - 0.5) / 0.5);
       }
 
-      // global alpha: fade in fast, hold, fade out near end
       let gAlpha;
       if (t < 0.12) gAlpha = t / 0.12;
       else if (t > 0.82) gAlpha = 1 - (t - 0.82) / 0.18;
@@ -317,7 +348,6 @@
         ctx.fill();
       }
 
-      // soft core glow at origin during explosion
       if (t < 0.5) {
         const glowR = 30 + coverage * 80;
         const g = ctx.createRadialGradient(originX, originY, 0, originX, originY, glowR);
@@ -331,7 +361,6 @@
 
       ctx.globalAlpha = 1;
 
-      // flip theme at peak coverage
       if (!peaked && t >= 0.46) {
         peaked = true;
         if (onPeak) onPeak();
@@ -367,7 +396,6 @@
     themeBtn.addEventListener('click', toggleTheme);
   }
 
-  // keep canvas crisp on resize
   window.addEventListener('resize', () => {
     if (pCanvas && !burstRunning) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
